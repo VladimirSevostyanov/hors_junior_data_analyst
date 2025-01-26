@@ -1,0 +1,151 @@
+{
+  "name": "job_n8n_test",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "={{['GET', 'POST']}}",
+        "path": "webhook",
+        "responseMode": "lastNode",
+        "responseData": "lastNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0cc7cbbe-5ab6-4d25-b85d-e5eb5765192f",
+      "webhookId": "e892d196-4134-4d37-86ab-c5bef2d10885"
+    },
+    {
+      "parameters": {
+        "url": "https://randomuser.me/api/",
+        "options": {}
+      },
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        200,
+        0
+      ],
+      "id": "5da2bc71-7534-4b80-9289-8723d2c42b7e"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json[\"results\"][0][\"dob\"][\"age\"]}}",
+              "operation": "larger",
+              "value2": 18
+            }
+          ]
+        }
+      },
+      "name": "IF User is 18+",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        400,
+        0
+      ],
+      "id": "3b8571cc-4456-4050-b768-b4d5c8b78680"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "transformed = []\nfor item in items:\n    user = item[\"json\"][\"results\"][0]\n    transformed.append({\n        \"json\": {\n            \"name\": f\"{user['name']['first']} {user['name']['last']}\",\n            \"age\": str(user['dob']['age']),\n            \"phone\": user['phone'],\n            \"gender\": user['gender']\n        }\n    })\nreturn transformed"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        0
+      ],
+      "id": "f497bb18-d1b3-4ce9-bec2-2475579c5c46",
+      "name": "Transformed "
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "attempts = flow.get(\"attempts\", 0)  # Получить значение \"attempts\" или установить 0, если его нет\nattempts += 1\n\nif attempts > 10:\n    raise Exception(\"Max attempts reached. No user over 18 found.\")\n\nflow[\"attempts\"] = attempts  # Установить обновлённое значение \"attempts\"\nreturn items"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        220
+      ],
+      "id": "41fab1f1-30f8-4568-9a4b-74cfc9044594",
+      "name": "New attempt"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "IF User is 18+",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF User is 18+": {
+      "main": [
+        [
+          {
+            "node": "Transformed ",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "New attempt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New attempt": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "91902b23-92f4-48aa-acd0-44a2f887fbff",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d57f9f55627125cc1660ed01b7f28bd3d653a1e328d48b5a58dacc720f72c649"
+  },
+  "id": "47IkisxmYZgFIZvr",
+  "tags": []
+}
